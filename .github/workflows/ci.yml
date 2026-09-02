@@ -1,0 +1,50 @@
+name: LOGISTPULSE CI
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+jobs:
+  architecture-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate required platform assets
+        run: |
+          test -f compose.yaml
+          test -f .devcontainer/Dockerfile
+          test -f observability/compose.yaml
+          test -f observability/prometheus.yml
+          for s in inventory-api logistics-api operations-api fulfillment-api; do test -f services/$s/app.py; done
+      - name: Validate Compose
+        run: |
+          docker compose config --quiet
+          docker compose -f observability/compose.yaml config --quiet
+  integration:
+    runs-on: ubuntu-latest
+    needs: architecture-contract
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and start LOGISTPULSE
+        run: docker compose up -d --build
+      - name: Wait and smoke test
+        run: |
+          for i in $(seq 1 60); do if curl -fsS http://localhost:8080/ >/dev/null 2>&1; then break; fi; sleep 3; done
+          bash scripts/smoke.sh
+      - name: Start observability control plane
+        run: docker compose -f observability/compose.yaml up -d prometheus grafana
+      - name: Validate observability health
+        run: |
+          for i in $(seq 1 30); do if curl -fsS http://localhost:9090/-/ready >/dev/null 2>&1; then break; fi; sleep 2; done
+          curl -fsS http://localhost:9090/-/ready
+          for i in $(seq 1 30); do if curl -fsS http://localhost:3000/api/health >/dev/null 2>&1; then break; fi; sleep 2; done
+          curl -fsS http://localhost:3000/api/health | grep -q ok
+      - name: Stop observability
+        if: always()
+        run: docker compose -f observability/compose.yaml down || true
+      - name: Container status on failure
+        if: failure()
+        run: docker compose ps && docker compose logs --tail=250
+      - name: Stop stack
+        if: always()
+        run: docker compose down -v

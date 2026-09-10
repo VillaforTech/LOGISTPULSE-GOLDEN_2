@@ -2,6 +2,8 @@
 
 **Independent LOGISTdragon universe — Operations, Logistics, IoT and Platform Engineering laboratory.**
 
+**Team:** see [CONTRIBUTING.md](CONTRIBUTING.md) for Deber 01 assignments, the branch workflow and Roberto's required review before merging into `main`.
+
 LOGISTPULSE simulates a national restaurant/retail operation with 300 stores, distribution centers, fleet telemetry, kitchen equipment and event-driven order fulfillment. It is intentionally independent from BANKdragon/BANKPULSE.
 
 ## Product domains
@@ -57,6 +59,8 @@ docker compose -f observability/compose.yaml up -d
 ## Git/CI model
 
 Work through feature branches and Pull Requests. `.github/workflows/ci.yml` validates the architecture contract, Compose configuration, builds the distributed stack and runs smoke tests before merge.
+
+The final **Release gate** requires both CI stages to succeed; failed, skipped or cancelled stages block integration. The Deber 01 business regression and real-time checks remain work assigned in the team issues; this repository setup does not implement them.
 
 ## Academic ownership
 

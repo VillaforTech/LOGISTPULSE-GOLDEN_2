@@ -30,7 +30,7 @@ def bootstrap():
     for _ in range(40):
         try:
             with conn() as c:
-                c.execute("CREATE TABLE IF NOT EXISTS inventory(store_id text, sku text, item_name text, unit text, stock numeric, forecast_4h numeric, PRIMARY KEY(store_id,sku))")
+                c.execute("CREATE TABLE IF NOT EXISTS inventory (store_id text, sku text, item_name text, unit text, stock numeric, forecast_4h numeric, PRIMARY KEY (store_id, sku))")
                 n=c.execute("SELECT count(*) FROM inventory").fetchone()[0]
                 if n==0:
                     c.executemany("INSERT INTO inventory VALUES (%s,%s,%s,%s,%s,%s)",[

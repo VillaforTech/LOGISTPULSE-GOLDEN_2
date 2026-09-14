@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Use the bundled upstream release; leave the caller's ADR directory unchanged.
+tool_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../tools/adr-tools" && pwd)"
+if [[ "${1:-}" == "--version" ]]; then
+  cat "$tool_dir/VERSION"
+  exit 0
+fi
+exec "$tool_dir/src/adr" "$@"

@@ -67,3 +67,8 @@ The final **Release gate** requires both CI stages to succeed; failed, skipped o
 Design of Systems teams own frontend/backend product evolution. Software Development teams act as DevOps/Platform teams: Codespaces, CI/CD, containerization, integration readiness, observability and later DevSecOps security gates.
 
 See `docs/` for C4, data ownership, missions and incident runbooks.
+
+## Registros de decisiones de arquitectura (ADR)
+
+ADR-Tools está incluido en el proyecto y sus registros se validan dentro de
+`architecture-contract`. Ver [instalación, comandos y alcance del control](docs/adr/README.md).

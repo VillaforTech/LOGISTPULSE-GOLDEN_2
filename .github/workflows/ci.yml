@@ -18,6 +18,13 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+      - name: Validate architecture decision records
+        run: |
+          ./scripts/adr --version
+          ./scripts/adr list
+          python3 scripts/check_adrs.py
+      - name: Test ADR tooling and reject malformed records
+        run: python3 -m unittest discover -s tests/adr -v
       - name: Validate required platform assets
         run: |
           test -f compose.yaml

@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0.0",
+  "caso": "pedido-vencido-25-50",
+  "descripcion": "Caso exacto del criterio de aceptacion del issue #5: un pedido con total=25.50 (unidades demo), creado en t0, que a los 20s SIGUE en WAITING (no alcanzo READY). El plazo (15s) ya vencio 5s antes de esta observacion.",
+  "notaTotal": "`total` es una unidad monetaria de laboratorio (demo), NO representa USD ni ingresos reales ni perdidos. El '25-50' del nombre de archivo es 25.50 (se evita el punto en el nombre de archivo).",
+  "parametros": {
+    "plazoS": 15,
+    "ventanaCohorteS": 900,
+    "ahoraEpoch": 1700000020.0
+  },
+  "pedidos": [
+    {
+      "orderId": "ORD-VENCIDO1",
+      "storeId": "STORE-042",
+      "channel": "MOBILE",
+      "total": 25.5,
+      "status": "WAITING",
+      "createdAt": 1700000000.0,
+      "updatedAt": 1700000000.0
+    }
+  ],
+  "kpisEsperados": {
+    "lK1": 100.0,
+    "lK2": "25.5",
+    "lK3": 5.0
+  }
+}

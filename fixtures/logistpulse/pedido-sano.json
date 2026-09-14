@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0.0",
+  "caso": "pedido-sano",
+  "descripcion": "Un pedido que llega a READY bien dentro del plazo de 15s (a los 4s, como el worker real: PREPARING -> duerme 4s -> READY). Evaluado despues de vencido el plazo, no debe contar como incumplido y no debe aportar a la deuda de backlog abierto porque ya esta cerrado.",
+  "notaTotal": "`total` es una unidad monetaria de laboratorio (demo), NO representa USD ni ingresos reales ni perdidos.",
+  "parametros": {
+    "plazoS": 15,
+    "ventanaCohorteS": 900,
+    "ahoraEpoch": 1700000030.0
+  },
+  "pedidos": [
+    {
+      "orderId": "ORD-SANO01",
+      "storeId": "STORE-042",
+      "channel": "MOBILE",
+      "total": 18.0,
+      "status": "READY",
+      "createdAt": 1700000000.0,
+      "updatedAt": 1700000004.0
+    }
+  ],
+  "kpisEsperados": {
+    "lK1": 0.0,
+    "lK2": "0",
+    "lK3": 0.0
+  }
+}

@@ -52,7 +52,7 @@ for msg in consumer:
     try:
         with conn() as c:
             row = c.execute(
-                "SELECT order_id,store_id,channel,total,status,created_at,updated_at FROM orders WHERE order_id=%s",
+                "SELECT order_id,store_id,channel,total,status,created_at,updated_at,ready_at,aggregate_version FROM orders WHERE order_id=%s",
                 (oid,),
             ).fetchone()
         if row is None:
@@ -70,7 +70,7 @@ for msg in consumer:
         if next_order.status != order.status:
             with conn() as c:
                 c.execute(
-                    "UPDATE orders SET status=%s,updated_at=%s WHERE order_id=%s",
+                    "UPDATE orders SET status=%s,updated_at=%s,aggregate_version=2 WHERE order_id=%s AND status='WAITING'",
                     (next_order.status, now, oid),
                 )
                 c.commit()
@@ -80,7 +80,7 @@ for msg in consumer:
 
         with conn() as c:
             row = c.execute(
-                "SELECT order_id,store_id,channel,total,status,created_at,updated_at FROM orders WHERE order_id=%s",
+                "SELECT order_id,store_id,channel,total,status,created_at,updated_at,ready_at,aggregate_version FROM orders WHERE order_id=%s",
                 (oid,),
             ).fetchone()
         if row is None:
@@ -91,14 +91,15 @@ for msg in consumer:
             total=float(row[3]),
             status=row[4],
             created_at=float(row[5]),
+            ready_at=float(row[7]) if row[7] is not None else None,
         )
         ready_now = time.time()
         next_ready = mark_ready(persisted, ready_now)
         if next_ready.status != persisted.status:
             with conn() as c:
                 c.execute(
-                    "UPDATE orders SET status=%s,updated_at=%s WHERE order_id=%s",
-                    (next_ready.status, ready_now, oid),
+                    "UPDATE orders SET status=%s,updated_at=%s,ready_at=%s,aggregate_version=3 WHERE order_id=%s AND status='PREPARING' AND ready_at IS NULL",
+                    (next_ready.status, ready_now, ready_now, oid),
                 )
                 c.commit()
             emit(order_ready_event(next_ready, iso_utc(ready_now), iso_utc(persisted.created_at), iso_utc(ready_now)))

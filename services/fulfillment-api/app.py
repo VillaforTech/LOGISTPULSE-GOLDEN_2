@@ -5,7 +5,7 @@ import time
 import uuid
 
 import psycopg
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, HTTPException, Request, Response
 from kafka import KafkaProducer
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
 from pydantic import BaseModel
@@ -48,8 +48,10 @@ def bootstrap():
         try:
             with conn() as c:
                 c.execute(
-                    "CREATE TABLE IF NOT EXISTS orders(order_id text primary key, store_id text, channel text, total numeric, status text, created_at numeric, updated_at numeric)"
+                    "CREATE TABLE IF NOT EXISTS orders(order_id text primary key, store_id text, channel text, total numeric, status text, created_at numeric, updated_at numeric, ready_at numeric, aggregate_version integer NOT NULL DEFAULT 1)"
                 )
+                c.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS ready_at numeric")
+                c.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS aggregate_version integer NOT NULL DEFAULT 1")
                 c.commit()
                 return
         except Exception:
@@ -98,12 +100,24 @@ def health():
 def orders():
     with conn() as c:
         rows = c.execute(
-            "SELECT order_id,store_id,channel,total,status,created_at,updated_at FROM orders ORDER BY created_at DESC LIMIT 20"
+            "SELECT order_id,store_id,channel,total,status,created_at,updated_at,ready_at,aggregate_version FROM orders ORDER BY created_at DESC LIMIT 20"
         ).fetchall()
     return [
-        {'orderId': r[0], 'storeId': r[1], 'channel': r[2], 'total': float(r[3]), 'status': r[4], 'createdAt': r[5], 'updatedAt': r[6]}
+        {'orderId': r[0], 'storeId': r[1], 'channel': r[2], 'total': float(r[3]), 'status': r[4], 'createdAt': r[5], 'updatedAt': r[6], 'readyAt': r[7], 'aggregateVersion': r[8]}
         for r in rows
     ]
+
+
+@app.get('/api/fulfillment/orders/{order_id}')
+def order_by_id(order_id: str):
+    with conn() as c:
+        row = c.execute(
+            "SELECT order_id,store_id,channel,total,status,created_at,updated_at,ready_at,aggregate_version FROM orders WHERE order_id=%s",
+            (order_id,),
+        ).fetchone()
+    if row is None:
+        raise HTTPException(status_code=404, detail='Order not found')
+    return {'orderId': row[0], 'storeId': row[1], 'channel': row[2], 'total': float(row[3]), 'status': row[4], 'createdAt': row[5], 'updatedAt': row[6], 'readyAt': row[7], 'aggregateVersion': row[8]}
 
 
 @app.post('/api/fulfillment/orders', status_code=201)
@@ -113,7 +127,7 @@ def create(o: NewOrder):
     order = Order(order_id=oid, total=float(o.total), status='WAITING', created_at=now)
     with conn() as c:
         c.execute(
-            "INSERT INTO orders VALUES (%s,%s,%s,%s,'WAITING',%s,%s)",
+            "INSERT INTO orders (order_id,store_id,channel,total,status,created_at,updated_at,ready_at,aggregate_version) VALUES (%s,%s,%s,%s,'WAITING',%s,%s,NULL,1)",
             (oid, o.storeId, o.channel, o.total, now, now),
         )
         c.commit()

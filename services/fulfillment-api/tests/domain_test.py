@@ -191,3 +191,35 @@ def test_create_order_emits_domain_event_contract(monkeypatch):
     assert any(topic == "logistpulse.orders" for topic, _ in sent)
     assert any(topic == "logistpulse.fulfillment.events.v1" for topic, _ in sent)
     assert any(value.get("eventType") == "OrderAccepted" for _, value in sent if isinstance(value, dict))
+
+
+def test_get_order_by_id_returns_persistent_ready_at_and_version(monkeypatch):
+    class FakeConn:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def execute(self, *args, **kwargs):
+            return self
+
+        def fetchone(self):
+            return ("ORD-0001", "STORE-042", "CI", 25.5, "READY", T0, T0 + 4, T0 + 4, 3)
+
+    monkeypatch.setattr("app.conn", lambda: FakeConn())
+
+    response = TestClient(app).get("/api/fulfillment/orders/ORD-0001")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "orderId": "ORD-0001",
+        "storeId": "STORE-042",
+        "channel": "CI",
+        "total": 25.5,
+        "status": "READY",
+        "createdAt": T0,
+        "updatedAt": T0 + 4,
+        "readyAt": T0 + 4,
+        "aggregateVersion": 3,
+    }

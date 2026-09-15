@@ -6,11 +6,11 @@ LogistPulse is a shared team portfolio project. Each contribution should improve
 
 | Issue | Owner | Product outcome |
 | --- | --- | --- |
-| [#1](https://github.com/VillaforTech/LOGISTPULSE-GOLDEN_2/issues/1) | `@nikotov` | Reliable fulfillment facts, event contracts and transactional outbox |
-| [#2](https://github.com/VillaforTech/LOGISTPULSE-GOLDEN_2/issues/2) | `@DanielSalazar0710` | Continuous analytics, deduplication, persistent state and timers |
-| [#3](https://github.com/VillaforTech/LOGISTPULSE-GOLDEN_2/issues/3) | `@oandretty010` | Grafana Live panels, business alerts and reconnect behavior |
-| [#4](https://github.com/VillaforTech/LOGISTPULSE-GOLDEN_2/issues/4) | `@VillaforTech` | Redpanda, Compose integration, CI and required release gate |
-| [#5](https://github.com/VillaforTech/LOGISTPULSE-GOLDEN_2/issues/5) | `@Dmt-155lbs` | End-to-end behavior, resilience, render latency and evidence |
+| [#1](https://github.com/VillaforTech/logistpulse/issues/1) | `@nikotov` | Reliable fulfillment facts, event contracts and transactional outbox |
+| [#2](https://github.com/VillaforTech/logistpulse/issues/2) | `@DanielSalazar0710` | Continuous analytics, deduplication, persistent state and timers |
+| [#3](https://github.com/VillaforTech/logistpulse/issues/3) | `@oandretty010` | Grafana Live panels, business alerts and reconnect behavior |
+| [#4](https://github.com/VillaforTech/logistpulse/issues/4) | `@VillaforTech` | Redpanda, Compose integration, CI and required release gate |
+| [#5](https://github.com/VillaforTech/logistpulse/issues/5) | `@Dmt-155lbs` | End-to-end behavior, resilience, render latency and evidence |
 
 Issue ownership coordinates the work; portfolio credit follows reviewed and merged commits. Agree on the event contract from #1 before integrating #2 and #3. The integration owner connects the components, and #5 verifies the complete story.
 
@@ -73,7 +73,7 @@ The integration contract in [TEAM-INTEGRATION](docs/TEAM-INTEGRATION.md) defines
 
 ## Using the reference implementation
 
-The separate [LogistPulse Reference](https://github.com/VillaforTech/LOGISTPULSE-GOLDEN_2-REFERENCE) is an executable example, not a substitute for a teammate's contribution. Review the design, adapt only the needed parts, preserve attribution and demonstrate the result in this repository with the team's own tests and PR history.
+The separate [LogistPulse Reference](https://github.com/VillaforTech/logistpulse-reference) is an executable example, not a substitute for a teammate's contribution. Review the design, adapt only the needed parts, preserve attribution and demonstrate the result in this repository with the team's own tests and PR history.
 
 ## Security and project context
 

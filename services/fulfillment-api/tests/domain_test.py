@@ -8,6 +8,10 @@ docs/kpis-deber-01.md and the event rules in docs/events-deber-01.md.
 Run from services/fulfillment-api/:
     pytest tests/test_domain.py -v
 """
+import os
+
+os.environ.setdefault("SKIP_DB_BOOTSTRAP", "1")
+
 import pytest
 from fastapi.testclient import TestClient
 

@@ -45,6 +45,8 @@ def conn():
 
 
 def bootstrap():
+    if os.getenv("SKIP_DB_BOOTSTRAP", "").strip().lower() in {"1", "true", "yes", "on"}:
+        return
     for _ in range(5):
         try:
             with conn() as c:
@@ -62,7 +64,13 @@ def bootstrap():
             time.sleep(1)
 
 
-bootstrap()
+@app.on_event("startup")
+def startup():
+    bootstrap()
+
+
+if __name__ == "__main__":
+    bootstrap()
 
 
 def iso_utc(ts: float) -> str:

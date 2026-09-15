@@ -47,10 +47,10 @@ def publish_pending():
     now = time.time()
     with conn() as c:
         rows = c.execute(
-            "SELECT event_id,topic,aggregate_id,payload FROM outbox WHERE published_at IS NULL AND next_attempt_at <= %s ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 50",
+            "SELECT event_id,topic,aggregate_id,payload,attempts FROM outbox WHERE published_at IS NULL AND next_attempt_at <= %s ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 50",
             (now,),
         ).fetchall()
-        for position, (event_id, topic, aggregate_id, payload) in enumerate(rows):
+        for event_id, topic, aggregate_id, payload, attempts in rows:
             try:
                 producer = producer_for_batch
                 producer.send(topic, key=aggregate_id, value=payload).get(timeout=10)
@@ -62,7 +62,7 @@ def publish_pending():
                 print("publish failed", event_id, error)
                 c.execute(
                     "UPDATE outbox SET attempts=attempts+1,next_attempt_at=%s WHERE event_id=%s",
-                    (time.time() + min(60, 2 ** min(6, position)), event_id),
+                    (time.time() + min(60, 2 ** min(6, attempts)), event_id),
                 )
         c.commit()
 

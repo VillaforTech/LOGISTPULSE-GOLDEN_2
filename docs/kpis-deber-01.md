@@ -107,3 +107,7 @@ Pedido único, `total = 25.5`, `createdAt = T0`.
 5. **Duplicado:** un segundo comando de "READY" sobre un pedido ya `READY` no reabre, no reprocesa, no cambia `readyAt`.
 6. **Rollback:** si la transacción de negocio falla, no debe existir ni el pedido ni su evento.
 7. **Sin muestra:** ninguna cohorte elegible en la ventana → `L-K1 = SIN MUESTRA`.
+
+## Cobertura y bootstrap
+
+La cobertura de KPIs y eventos comienza en el inicio de una sesión limpia de Codespace. Para datos previos a ese arranque, no se inventan `readyAt` ni se consultan otras bases para “completar” la historia; se usa una instantánea consistente con un corte explícito o se marca la medición como `INCOMPLETO` hasta reconciliarla. El punto de partida del sistema es el momento en que la sesión queda en estado limpio, no la historia oculta de otra base o despliegue. Cualquier dato preexistente que no pueda verificarse con ese corte se considera no elegible para la métrica hasta ser reconciliado.

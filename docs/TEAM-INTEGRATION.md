@@ -36,6 +36,6 @@ No usar el agregado anterior que permitía resiliencia SKIPPED. Implementar los 
 2. #1 y #2 confirman el envelope, precisión y bordes temporales; #1 completa producción/outbox y #2 consume el topic aprovisionado.
 3. #3 entrega adaptador/panel y #5 entrega medición real y resiliencia. Conectar sus servicios en Compose antes de activar el harness.
 4. Ejecutar la demostración sano → negocio rojo con servicios UP → gate bloqueado → corregido verde; conservar SHAs y runs.
-5. Obtener revisión elegible y reproducir en Codespace limpio. El CODEOWNERS actual solo lista a Roberto; un PR propio no se autoaprueba. No se modificaron permisos ni protecciones.
+5. Obtener revisión elegible y reproducir en Codespace limpio. La regla autorizada el 15 de septiembre exige una aprobación de otro colaborador con escritura; CODEOWNERS solo sugiere revisor. Se conservan todos los checks, la invalidación de aprobaciones y enforcement al administrador. Un PR propio no se autoaprueba.
 
 Referencia: [gemelo](https://github.com/VillaforTech/LOGISTPULSE-GOLDEN_2-REFERENCE). Código de referencia asistido por Codex; cada integrante conserva autoría y evidencia de su implementación.

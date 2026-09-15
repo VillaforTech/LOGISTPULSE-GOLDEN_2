@@ -40,7 +40,7 @@ Al marcar **Ready for review**, GitHub solicita a Roberto la revisión mediante 
 
 La protección de `main` exige:
 
-- Un PR y al menos una aprobación, con revisión del propietario del código (`@VillaforTech`).
+- Un PR y al menos una aprobación vigente de otro colaborador con permiso de escritura. CODEOWNERS sigue sugiriendo revisor, pero ya no exige que solo Roberto apruebe.
 - Una aprobación vigente: los cambios nuevos invalidan las aprobaciones anteriores.
 - Todas las conversaciones de revisión resueltas.
 - La rama actualizada con `main` y estos checks de GitHub Actions en verde: `architecture-contract`, `integration` y `Release gate`.
@@ -70,7 +70,7 @@ Con aprobación vigente y checks correctos, integrar con **Squash and merge**. E
 
 ## Alcance del gate inicial
 
-El `Release gate` de configuración comprueba que las etapas actuales de arquitectura e integración hayan terminado con `success`. Un fallo, una etapa omitida o una cancelación no producen un gate verde.
+El `Release gate` de configuración comprueba que las etapas de arquitectura, unit tests e integración hayan terminado con `success`. Un fallo, una etapa omitida o una cancelación no producen un gate verde.
 
 Este gate todavía no implementa la prueba de negocio del Deber 01 ni las verificaciones de analítica en tiempo real. #4 debe incorporar esas etapas y añadirlas a las dependencias y comprobaciones del gate. #5 debe demostrar un caso correcto, una regresión controlada con infraestructura sana que bloquee el merge y su corrección. La regresión se demuestra en un PR y nunca se integra en `main`.
 
@@ -81,3 +81,7 @@ Al configurar el equipo el 9 de septiembre de 2026, el CI base fallaba al consul
 No subir `.env`, tokens ni credenciales reales. Usar datos de laboratorio en pruebas y evidencias. Revisar migraciones, contratos y cambios de ownership de datos explícitamente en el PR.
 
 La configuración inicial de `CODEOWNERS`, plantilla y gate se instala antes de activar la protección para que GitHub pueda leer la política desde `main`. Los cambios posteriores a esta configuración siguen el mismo proceso de PR y revisión que el resto del código.
+
+## Integración preparada el 15 de septiembre
+
+Ver [TEAM-INTEGRATION](docs/TEAM-INTEGRATION.md) para topic, volumen, API de analítica y contrato del harness. La política autorizada conserva una aprobación de un compañero, todos los checks requeridos, invalidación de aprobaciones y enforcement al administrador; solo se desactivó la obligación de CODEOWNERS para permitir revisión de los PRs de Roberto.

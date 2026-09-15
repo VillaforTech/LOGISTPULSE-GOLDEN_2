@@ -1,87 +1,82 @@
-# Trabajo en equipo — LogistPulse
+# Contributing to LogistPulse
 
-Todos trabajamos en este repositorio compartido, con una rama por tarea y un Pull Request (PR) hacia `main`. Roberto (`@VillaforTech`) revisa los cambios del equipo. Una issue asignada define el trabajo; un PR contiene la implementación y su evidencia.
+LogistPulse is a shared team portfolio project. Each contribution should improve a visible product behavior, an operational property or the confidence of the release process. GitHub issues define the work; pull requests contain the implementation, tests and observed evidence.
 
-## Reparto del Deber 01
+## Active workstreams
 
-| Issue | Responsable | Entrega |
+| Issue | Owner | Product outcome |
 | --- | --- | --- |
-| [#1](https://github.com/VillaforTech/LOGISTPULSE-GOLDEN_2/issues/1) | `@nikotov` | Contrato de eventos, outbox del ciclo del pedido y definición de KPIs propios. |
-| [#2](https://github.com/VillaforTech/LOGISTPULSE-GOLDEN_2/issues/2) | `@DanielSalazar0710` | Analítica continua, deduplicación, estado persistente y temporizadores. |
-| [#3](https://github.com/VillaforTech/LOGISTPULSE-GOLDEN_2/issues/3) | `@oandretty010` | Grafana Live, paneles, alertas y reconexión. |
-| [#4](https://github.com/VillaforTech/LOGISTPULSE-GOLDEN_2/issues/4) | `@VillaforTech` | Compose, streaming, integración y Release Gate del deber. |
-| [#5](https://github.com/VillaforTech/LOGISTPULSE-GOLDEN_2/issues/5) | `@Dmt-155lbs` | Pruebas de extremo a extremo, resiliencia y evidencia del falso verde. |
+| [#1](https://github.com/VillaforTech/LOGISTPULSE-GOLDEN_2/issues/1) | `@nikotov` | Reliable fulfillment facts, event contracts and transactional outbox |
+| [#2](https://github.com/VillaforTech/LOGISTPULSE-GOLDEN_2/issues/2) | `@DanielSalazar0710` | Continuous analytics, deduplication, persistent state and timers |
+| [#3](https://github.com/VillaforTech/LOGISTPULSE-GOLDEN_2/issues/3) | `@oandretty010` | Grafana Live panels, business alerts and reconnect behavior |
+| [#4](https://github.com/VillaforTech/LOGISTPULSE-GOLDEN_2/issues/4) | `@VillaforTech` | Redpanda, Compose integration, CI and required release gate |
+| [#5](https://github.com/VillaforTech/LOGISTPULSE-GOLDEN_2/issues/5) | `@Dmt-155lbs` | End-to-end behavior, resilience, render latency and evidence |
 
-Las issues contienen los criterios completos y las dependencias. Acordar el contrato de #1 antes de integrar #2 y #3. #4 integra los componentes; #5 valida el conjunto. Se puede preparar trabajo en paralelo usando ese contrato, sin presentar una simulación como integración terminada.
+Issue ownership coordinates the work; portfolio credit follows reviewed and merged commits. Agree on the event contract from #1 before integrating #2 and #3. The integration owner connects the components, and #5 verifies the complete story.
 
-## Crear una contribución
+## Branch and pull-request workflow
 
-Con el árbol de trabajo limpio, por ejemplo para la issue #2:
+Start from an updated `main` and create one focused branch per issue:
 
 ```bash
 git switch main
 git pull --ff-only origin main
 git switch -c feat/2-business-analytics
 
-# Implementar y ejecutar las comprobaciones del cambio.
+# Implement and validate the change.
 git diff --check
-git add ruta/al/archivo
-git commit -m "feat(analytics): persist order projections"
+git add path/to/file
+git commit -m "feat(analytics): persist fulfillment projections"
 git push -u origin feat/2-business-analytics
 ```
 
-Usar prefijos `feat/`, `fix/`, `docs/` o `chore/` y el número de issue. Mantener los PR pequeños y con un objetivo revisable. No modificar la rama de otro compañero sin coordinarlo.
+Use `feat/`, `fix/`, `docs/` or `chore/` plus the issue number. Do not modify another contributor's branch without coordinating first.
 
-Abrir el PR contra `main`, completar la plantilla y vincular la issue. Usar **Draft** mientras el trabajo esté incompleto. Usar `Closes #2` solo cuando ese PR complete toda la issue; para avances parciales, usar `Relacionado con #2`.
+Open the PR against `main`, complete the template and link the issue. Keep it in **Draft** while incomplete. Use `Closes #2` only when the PR satisfies the whole issue; use `Related to #2` for a partial delivery.
 
-Al marcar **Ready for review**, GitHub solicita a Roberto la revisión mediante [CODEOWNERS](.github/CODEOWNERS). Los borradores no solicitan automáticamente revisión al propietario del código. Si GitHub pide actualizar la rama, integrar `origin/main` en la rama de trabajo y repetir las comprobaciones antes de solicitar aprobación.
+## Definition of done
 
-## Condiciones para integrar
+A contribution is ready for review when:
 
-La protección de `main` exige:
+- the product behavior and reason for the change are clear;
+- the branch is current with `main`;
+- relevant unit, integration, business and recovery checks pass;
+- event contracts and data ownership remain compatible;
+- observed results and commands are recorded in the PR;
+- no secrets, real customer data or generated private configuration are committed;
+- documentation describes the final behavior rather than the implementation plan.
 
-- Un PR y al menos una aprobación vigente de otro colaborador con permiso de escritura. CODEOWNERS sigue sugiriendo revisor, pero ya no exige que solo Roberto apruebe.
-- Una aprobación vigente: los cambios nuevos invalidan las aprobaciones anteriores.
-- Todas las conversaciones de revisión resueltas.
-- La rama actualizada con `main` y estos checks de GitHub Actions en verde: `architecture-contract`, `integration` y `Release gate`.
-- Historial lineal mediante **Squash and merge**; GitHub elimina la rama remota después de integrar.
+For event and KPI work, cover duplicates, replay, restart, no-traffic deadlines, recovery and freshness as applicable. A documentation-only PR should say that application tests do not apply and list its documentation checks.
 
-Las reglas también se aplican al administrador. Los pushes directos, force pushes y la eliminación de `main` están bloqueados. No hay una excepción permanente para saltar las revisiones o los checks. No desactivar las reglas para resolver un CI rojo.
+## Merge protection
 
-GitHub no permite aprobar un PR propio. Si el autor es Roberto, debe pedir revisión a otro colaborador antes de integrar sus cambios. Esto también afecta a PR creados por una herramienta autenticada con su cuenta.
+`main` requires:
 
-## Validar y revisar
+- a pull request and one current approval from another collaborator with write access;
+- resolved review conversations;
+- an up-to-date branch;
+- green `architecture-contract`, `integration`, and `Release gate` checks;
+- squash merge and linear history.
 
-Seguir el [README](README.md) para preparar el entorno. Antes de solicitar revisión de cambios de aplicación:
+New commits dismiss earlier approvals. Rules also apply to administrators; direct pushes, force pushes and deletion of `main` are blocked. Do not weaken a check to make a failing branch green. Authors cannot approve their own PRs, including PRs created through an authenticated automation tool.
+
+## Local validation
 
 ```bash
 docker compose config --quiet
 docker compose -f observability/compose.yaml config --quiet
-docker compose up -d --build
-# Esperar a que todas las APIs estén listas antes de ejecutar el smoke.
+docker compose up --build -d --wait
 bash scripts/smoke.sh
 ```
 
-Registrar comandos y resultados reales en el PR. Para eventos y KPIs, agregar las pruebas de duplicados, reinicio, temporizadores sin eventos, recuperación y frescura que correspondan a la issue. Un cambio solo documental debe indicar que las pruebas de aplicación no aplican y describir su validación documental.
+The integration contract in [TEAM-INTEGRATION](docs/TEAM-INTEGRATION.md) defines the topic, analytics interface and acceptance hook. Once `scripts/acceptance/` exists, skipped resilience checks and API-only latency evidence must fail the pipeline. The deliberate broken business revision belongs in a PR demonstration and must never be merged into `main`.
 
-Roberto revisa **Files changed**, las pruebas y los resultados de **Checks**. Puede usar **Review changes → Request changes** para pedir correcciones y **Approve** cuando el cambio esté listo. Un comentario o una casilla marcada en la plantilla no equivalen a una aprobación.
+## Using the reference implementation
 
-Con aprobación vigente y checks correctos, integrar con **Squash and merge**. El título del PR será el título del commit; escribirlo como una descripción del cambio. Una vez integrado, cada compañero actualiza su `main` local antes de comenzar otra tarea.
+The separate [LogistPulse Reference](https://github.com/VillaforTech/LOGISTPULSE-GOLDEN_2-REFERENCE) is an executable example, not a substitute for a teammate's contribution. Review the design, adapt only the needed parts, preserve attribution and demonstrate the result in this repository with the team's own tests and PR history.
 
-## Alcance del gate inicial
+## Security and project context
 
-El `Release gate` de configuración comprueba que las etapas de arquitectura, unit tests e integración hayan terminado con `success`. Un fallo, una etapa omitida o una cancelación no producen un gate verde.
+Never commit `.env`, access tokens, institutional credentials or real customer, fleet or order data. Review migrations, event contracts and ownership changes explicitly.
 
-Este gate todavía no implementa la prueba de negocio del Deber 01 ni las verificaciones de analítica en tiempo real. #4 debe incorporar esas etapas y añadirlas a las dependencias y comprobaciones del gate. #5 debe demostrar un caso correcto, una regresión controlada con infraestructura sana que bloquee el merge y su corrección. La regresión se demuestra en un PR y nunca se integra en `main`.
-
-Al configurar el equipo el 9 de septiembre de 2026, el CI base fallaba al consultar inventario con HTTP 502 durante el arranque. Corregir y demostrar la espera de disponibilidad de todas las APIs dentro de #4 antes de integrar trabajo dependiente; no debilitar la prueba para obtener un resultado verde.
-
-## Configuración y datos
-
-No subir `.env`, tokens ni credenciales reales. Usar datos de laboratorio en pruebas y evidencias. Revisar migraciones, contratos y cambios de ownership de datos explícitamente en el PR.
-
-La configuración inicial de `CODEOWNERS`, plantilla y gate se instala antes de activar la protección para que GitHub pueda leer la política desde `main`. Los cambios posteriores a esta configuración siguen el mismo proceso de PR y revisión que el resto del código.
-
-## Integración preparada el 15 de septiembre
-
-Ver [TEAM-INTEGRATION](docs/TEAM-INTEGRATION.md) para topic, volumen, API de analítica y contrato del harness. La política autorizada conserva una aprobación de un compañero, todos los checks requeridos, invalidación de aprobaciones y enforcement al administrador; solo se desactivó la obligación de CODEOWNERS para permitir revisión de los PRs de Roberto.
+The team also uses this repository for a graded software-engineering case study. Those deadlines and evidence requirements remain valid, while product documentation, commit history and contribution records are maintained for long-term portfolio use.

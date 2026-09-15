@@ -15,8 +15,8 @@ Los repos comparten puertos publicados: usar Codespaces distintos o detener una 
 
 ## Contrato de infraestructura para el equipo
 
-- Broker: `redpanda:9092`, topic `logistpulse.fulfillment.events.v1`, clave `aggregateId`, una partición y retención de 24 h para el laboratorio. El bootstrap es idempotente y no recrea topics existentes.
-- Analítica #2: se acepta SQLite propio con WAL, volumen Linux y **una sola instancia** para este laboratorio. No necesita migrar a PostgreSQL para integrar. No lee tablas del productor. El gemelo usa otro almacenamiento; adaptar interfaces, no copiar su stack completo.
+- Broker: `redpanda:9092`, topic `logistpulse.fulfillment.events.v1`, clave `aggregateId`, una partición y retención de 24 h para el entorno de desarrollo. El bootstrap es idempotente y no recrea topics existentes.
+- Analítica #2: se acepta SQLite propio con WAL, volumen Linux y **una sola instancia** para este alcance. No necesita migrar a PostgreSQL para integrar. No lee tablas del productor. El gemelo usa otro almacenamiento; adaptar interfaces, no copiar su stack completo.
 - Después de incluir el PR de #2, usar `docker compose -f compose.yaml -f compose.analytics.yaml up --build -d --wait`. `ANALYTICS_COVERAGE_FROM` debe ser el inicio UTC real de una población conocida. No cambiarlo sobre una base existente ni inventar cobertura para datos previos.
 - Analítica interna: `http://business-analytics:8000`, `/health`, `/ready`, `/snapshot`, `/updates?after=N`, `/stream?after=N`, `/metrics`. El volumen es exclusivo y persiste durante reinicios.
 - #1 conserva su outbox y publica después del commit con eventId estable y aggregateVersion consecutiva. UTC debe conservar microsegundos. Deadline exactamente alcanzado es puntual; una cohorte expira al llegar a 900 s (ventana semiabierta). Coordinar estas decisiones con la documentación del productor y los tests del consumidor.
@@ -24,7 +24,7 @@ Los repos comparten puertos publicados: usar Codespaces distintos o detener una 
 
 ## Gate y entrega de #5
 
-El CI ejecuta unidades, compilación, despliegue, smoke, observabilidad y conserva artifacts antes de detener. Si se incluye `scripts/acceptance/`, `scripts/team-acceptance.sh` se vuelve obligatorio dentro del check de integración y por tanto de `Release gate`. **Error, SKIPPED y medición parcial bloquean.** Sin ese directorio, el verde solo acredita la base, no la aceptación del deber.
+El CI ejecuta unidades, compilación, despliegue, smoke, observabilidad y conserva artifacts antes de detener. Si se incluye `scripts/acceptance/`, `scripts/team-acceptance.sh` se vuelve obligatorio dentro del check de integración y por tanto de `Release gate`. **Error, SKIPPED y medición parcial bloquean.** Sin ese directorio, el verde solo acredita la base, no la aceptación completa del producto.
 
 El benchmark de #5 conserva `--base-url` y `--out`; debe producir `measurementTarget=grafana-render`, requested/observed=100, lost=0, errors=[], p95Ms recalculable y 100 samples con correlationId único, rendered=true, correct=true, quality=FRESH, revision>0, latencyMs finito. El oráculo verifica los valores y la identidad de los tres paneles antes de escribir cada sample. El checker no convierte un booleano declarado en prueba visual: adjuntar captura y mediciones crudas del navegador. El prototipo API-only actual falla deliberadamente este contrato.
 

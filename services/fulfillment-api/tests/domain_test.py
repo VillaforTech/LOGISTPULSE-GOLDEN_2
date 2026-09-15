@@ -143,20 +143,10 @@ def test_order_ready_event_shape():
 
 
 def test_create_order_emits_domain_event_contract(monkeypatch):
-    class FakeCursor:
-        def __enter__(self):
-            return self
-
-        def __exit__(self, exc_type, exc, tb):
-            return False
-
-        def execute(self, *args, **kwargs):
-            return None
-
-        def commit(self):
-            return None
-
     class FakeConn:
+        def __init__(self):
+            self.statements = []
+
         def __enter__(self):
             return self
 
@@ -164,33 +154,25 @@ def test_create_order_emits_domain_event_contract(monkeypatch):
             return False
 
         def execute(self, *args, **kwargs):
+            self.statements.append((args, kwargs))
             return None
 
         def commit(self):
             return None
 
-    sent = []
-
-    class FakeProducer:
-        def send(self, topic, value):
-            sent.append((topic, value))
-
-        def flush(self):
-            return None
-
-        def close(self):
-            return None
-
-    monkeypatch.setattr("app.conn", lambda: FakeConn())
-    monkeypatch.setattr("app.producer", lambda: FakeProducer())
+    connection = FakeConn()
+    monkeypatch.setattr("app.conn", lambda: connection)
 
     client = TestClient(app)
     resp = client.post("/api/fulfillment/orders", json={"storeId": "STORE-042", "channel": "CI", "total": 25.5})
 
     assert resp.status_code == 201
-    assert any(topic == "logistpulse.orders" for topic, _ in sent)
-    assert any(topic == "logistpulse.fulfillment.events.v1" for topic, _ in sent)
-    assert any(value.get("eventType") == "OrderAccepted" for _, value in sent if isinstance(value, dict))
+    outbox_args = next(args for args, _ in connection.statements if "INSERT INTO outbox" in args[0])
+    outbox_values = outbox_args[1]
+    assert len(outbox_values) == 14
+    assert outbox_values[1] == "logistpulse.orders"
+    assert outbox_values[8] == "logistpulse.fulfillment.events.v1"
+    assert outbox_values[0] != outbox_values[7]
 
 
 def test_get_order_by_id_returns_persistent_ready_at_and_version(monkeypatch):

@@ -44,6 +44,14 @@ bash scripts/smoke.sh
 
 Open Codespaces port **8080**.
 
+For the fulfillment acceptance path, run the business test after the stack is ready:
+
+```bash
+bash scripts/business-test.sh
+```
+
+It creates one order, observes that exact `orderId` through the individual API endpoint, and fails with a non-zero exit code if `READY` is missing, late, or has no persisted `readyAt`. Fulfillment events are committed to the Postgres outbox and published by the relay to the separate kitchen-command and analytics topics.
+
 ## Observability
 
 ```bash

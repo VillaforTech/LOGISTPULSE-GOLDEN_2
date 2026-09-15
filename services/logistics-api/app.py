@@ -28,9 +28,11 @@ def bootstrap():
     try:
       with conn() as c:
         c.execute("CREATE TABLE IF NOT EXISTS trucks(truck_id text primary key, route text, status text, stops_done int, stops_total int, eta_min int, temp_c numeric, lat numeric, lon numeric)")
-        if c.execute("SELECT count(*) FROM trucks").fetchone()[0]==0:
-          c.executemany("INSERT INTO trucks VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",[
-            ('TRUCK-017','Quito Norte','IN_TRANSIT',6,11,28,3.8,-0.1807,-78.4678),('TRUCK-023','Quito Sur','LOADING',0,8,64,4.2,-0.245,-78.53)])
+        for row in [
+          ('TRUCK-017','Quito Norte','IN_TRANSIT',6,11,28,3.8,-0.1807,-78.4678),
+          ('TRUCK-023','Quito Sur','LOADING',0,8,64,4.2,-0.245,-78.53),
+        ]:
+          c.execute("INSERT INTO trucks VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT (truck_id) DO NOTHING", row)
         c.commit(); return
     except Exception: time.sleep(1)
 bootstrap()

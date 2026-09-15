@@ -37,6 +37,7 @@ app = FastAPI(title="LOGISTPULSE Fulfillment API", version="1.0.0")
 instrument(app, "fulfillment-api")
 DB = os.getenv("FULFILLMENT_DB_URL", "postgresql://logist:logist_demo@postgres:5432/fulfillment_db")
 KAFKA = os.getenv("KAFKA_BOOTSTRAP", "redpanda:9092")
+OUTBOX_TABLE = "outbox"
 
 
 def conn():
@@ -52,6 +53,9 @@ def bootstrap():
                 )
                 c.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS ready_at numeric")
                 c.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS aggregate_version integer NOT NULL DEFAULT 1")
+                c.execute(
+                    "CREATE TABLE IF NOT EXISTS outbox(event_id text primary key, topic text NOT NULL, aggregate_id text NOT NULL, aggregate_version integer NOT NULL, payload jsonb NOT NULL, created_at numeric NOT NULL, published_at numeric, attempts integer NOT NULL DEFAULT 0, next_attempt_at numeric NOT NULL)"
+                )
                 c.commit()
                 return
         except Exception:
@@ -61,28 +65,8 @@ def bootstrap():
 bootstrap()
 
 
-def producer():
-    for _ in range(20):
-        try:
-            return KafkaProducer(bootstrap_servers=KAFKA, value_serializer=lambda v: json.dumps(v).encode())
-        except Exception:
-            time.sleep(1)
-    return None
-
-
 def iso_utc(ts: float) -> str:
     return datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-
-
-def emit(topic: str, payload: dict):
-    p = producer()
-    if not p:
-        return
-    try:
-        p.send(topic, payload)
-        p.flush()
-    finally:
-        p.close()
 
 
 class NewOrder(BaseModel):
@@ -125,14 +109,23 @@ def create(o: NewOrder):
     oid = 'ORD-' + uuid.uuid4().hex[:6].upper()
     now = time.time()
     order = Order(order_id=oid, total=float(o.total), status='WAITING', created_at=now)
+    accepted = order_accepted_event(order, iso_utc(now))
+    command = {
+        "eventId": str(uuid.uuid4()),
+        "orderId": oid,
+        "event": "ORDER_CREATED",
+        "storeId": o.storeId,
+    }
     with conn() as c:
         c.execute(
             "INSERT INTO orders (order_id,store_id,channel,total,status,created_at,updated_at,ready_at,aggregate_version) VALUES (%s,%s,%s,%s,'WAITING',%s,%s,NULL,1)",
             (oid, o.storeId, o.channel, o.total, now, now),
         )
+        c.execute(
+            "INSERT INTO outbox (event_id,topic,aggregate_id,aggregate_version,payload,created_at,next_attempt_at) VALUES (%s,%s,%s,%s,%s,%s,%s),(%s,%s,%s,%s,%s,%s,%s)",
+            (command["eventId"], "logistpulse.orders", oid, 1, json.dumps(command), now, now,
+             accepted["eventId"], "logistpulse.fulfillment.events.v1", oid, 1, json.dumps(accepted), now, now),
+        )
         c.commit()
-
-    emit('logistpulse.orders', {'orderId': oid, 'event': 'ORDER_CREATED', 'storeId': o.storeId})
-    emit('logistpulse.fulfillment.events.v1', order_accepted_event(order, iso_utc(now)))
     return {'orderId': oid, 'status': 'WAITING', 'aggregateVersion': 1}
 

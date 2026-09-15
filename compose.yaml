@@ -85,6 +85,14 @@ services:
     depends_on: {postgres: {condition: service_healthy}, redpanda: {condition: service_started}}
     networks: [logist]
 
+  fulfillment-relay:
+    build: ./services/fulfillment-relay
+    environment:
+      FULFILLMENT_DB_URL: postgresql://${POSTGRES_USER:-logist}:${POSTGRES_PASSWORD:-logist_demo}@postgres:5432/fulfillment_db
+      KAFKA_BOOTSTRAP: redpanda:9092
+    depends_on: {postgres: {condition: service_healthy}, redpanda: {condition: service_started}}
+    networks: [logist]
+
   console:
     image: nginx:1.27-alpine
     volumes:

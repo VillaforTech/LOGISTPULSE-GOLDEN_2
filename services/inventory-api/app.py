@@ -31,10 +31,13 @@ def bootstrap():
         try:
             with conn() as c:
                 c.execute("CREATE TABLE IF NOT EXISTS inventory (store_id text, sku text, item_name text, unit text, stock numeric, forecast_4h numeric, PRIMARY KEY (store_id, sku))")
-                n=c.execute("SELECT count(*) FROM inventory").fetchone()[0]
-                if n==0:
-                    c.executemany("INSERT INTO inventory VALUES (%s,%s,%s,%s,%s,%s)",[
-                      ('STORE-042','CHK','Pollo','kg',38,61),('STORE-042','POT','Papas','kg',74,52),('STORE-042','OIL','Aceite','L',21,30),('STORE-042','PKG','Empaques','u',425,310)])
+                for row in [
+                    ('STORE-042','CHK','Pollo','kg',38,61),
+                    ('STORE-042','POT','Papas','kg',74,52),
+                    ('STORE-042','OIL','Aceite','L',21,30),
+                    ('STORE-042','PKG','Empaques','u',425,310),
+                ]:
+                    c.execute("INSERT INTO inventory VALUES (%s,%s,%s,%s,%s,%s) ON CONFLICT (store_id, sku) DO NOTHING", row)
                 c.commit(); return
         except Exception: time.sleep(1)
 bootstrap()
@@ -46,7 +49,7 @@ def health(): return {'status':'UP','service':'inventory-api'}
 def inventory(store_id:str):
     with conn() as c:
         rows=c.execute("SELECT sku,item_name,unit,stock,forecast_4h FROM inventory WHERE store_id=%s ORDER BY item_name",(store_id,)).fetchall()
-    return [{'sku':r[0],'item':r[1],'unit':r[2],'stock':float(r[3]),'forecast4h':float(r[4]),'risk':'HIGH' if r[3]<r[4]*.75 else ('MEDIUM' if r[3]<r[4] else 'LOW')} for r in rows]
+    return [{'sku':r[0],'item':r[1],'unit':r[2],'stock':float(r[3]),'forecast4h':float(r[4]),'risk':'HIGH' if float(r[3])<float(r[4])*.75 else ('MEDIUM' if float(r[3])<float(r[4]) else 'LOW')} for r in rows]
 @app.post('/api/inventory/{store_id}/{sku}/adjust')
 def adjust(store_id:str,sku:str,a:Adjustment):
     with conn() as c:

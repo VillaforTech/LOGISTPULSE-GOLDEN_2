@@ -22,13 +22,20 @@ def iso_utc(ts: float) -> str:
     return datetime.fromtimestamp(ts, tz=timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
 
 
-def emit(event: dict):
-    producer = KafkaProducer(bootstrap_servers=KAFKA, value_serializer=lambda v: json.dumps(v).encode())
-    try:
-        producer.send('logistpulse.fulfillment.events.v1', event)
-        producer.flush()
-    finally:
-        producer.close()
+def bootstrap():
+    for _ in range(30):
+        try:
+            with conn() as c:
+                c.execute(
+                    "CREATE TABLE IF NOT EXISTS outbox(event_id text primary key, topic text NOT NULL, aggregate_id text NOT NULL, aggregate_version integer NOT NULL, payload jsonb NOT NULL, created_at numeric NOT NULL, published_at numeric, attempts integer NOT NULL DEFAULT 0, next_attempt_at numeric NOT NULL)"
+                )
+                c.commit()
+                return
+        except Exception:
+            time.sleep(1)
+
+
+bootstrap()
 
 
 while True:
@@ -68,13 +75,18 @@ for msg in consumer:
         next_order = start_preparation(order)
         now = time.time()
         if next_order.status != order.status:
+            preparation = preparation_started_event(next_order, iso_utc(now), iso_utc(order.created_at))
             with conn() as c:
-                c.execute(
+                updated = c.execute(
                     "UPDATE orders SET status=%s,updated_at=%s,aggregate_version=2 WHERE order_id=%s AND status='WAITING'",
                     (next_order.status, now, oid),
                 )
+                if updated.rowcount:
+                    c.execute(
+                        "INSERT INTO outbox (event_id,topic,aggregate_id,aggregate_version,payload,created_at,next_attempt_at) VALUES (%s,%s,%s,%s,%s,%s,%s)",
+                        (preparation["eventId"], "logistpulse.fulfillment.events.v1", oid, 2, json.dumps(preparation), now, now),
+                    )
                 c.commit()
-            emit(preparation_started_event(next_order, iso_utc(now), iso_utc(order.created_at)))
 
         time.sleep(4)
 
@@ -96,12 +108,17 @@ for msg in consumer:
         ready_now = time.time()
         next_ready = mark_ready(persisted, ready_now)
         if next_ready.status != persisted.status:
+            ready_event = order_ready_event(next_ready, iso_utc(ready_now), iso_utc(persisted.created_at), iso_utc(ready_now))
             with conn() as c:
-                c.execute(
+                updated = c.execute(
                     "UPDATE orders SET status=%s,updated_at=%s,ready_at=%s,aggregate_version=3 WHERE order_id=%s AND status='PREPARING' AND ready_at IS NULL",
                     (next_ready.status, ready_now, ready_now, oid),
                 )
+                if updated.rowcount:
+                    c.execute(
+                        "INSERT INTO outbox (event_id,topic,aggregate_id,aggregate_version,payload,created_at,next_attempt_at) VALUES (%s,%s,%s,%s,%s,%s,%s)",
+                        (ready_event["eventId"], "logistpulse.fulfillment.events.v1", oid, 3, json.dumps(ready_event), ready_now, ready_now),
+                    )
                 c.commit()
-            emit(order_ready_event(next_ready, iso_utc(ready_now), iso_utc(persisted.created_at), iso_utc(ready_now)))
     except Exception as e:
         print('worker error', e)

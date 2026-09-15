@@ -6,7 +6,7 @@ explicit `now` you control. Mirrors the 7 mandatory cases in
 docs/kpis-deber-01.md and the event rules in docs/events-deber-01.md.
 
 Run from services/fulfillment-api/:
-    pytest tests/test_domain.py -v
+    pytest tests/domain_test.py -v
 """
 import os
 

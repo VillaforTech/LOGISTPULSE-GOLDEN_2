@@ -1,5 +1,16 @@
 name: logistpulse
 services:
+  business-topics:
+    image: redpandadata/redpanda:v24.3.18
+    depends_on:
+      redpanda: {condition: service_healthy}
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        rpk topic describe logistpulse.fulfillment.events.v1 --brokers redpanda:9092 >/dev/null 2>&1 || rpk topic create logistpulse.fulfillment.events.v1 --brokers redpanda:9092 --partitions 1 --replicas 1 -c retention.ms=86400000
+        rpk topic describe logistpulse.fulfillment.events.v1 --brokers redpanda:9092
+    networks: [logist]
+
   postgres:
     image: postgres:16-alpine
     environment:
@@ -27,12 +38,23 @@ services:
     networks: [logist]
 
   mosquitto:
+    healthcheck:
+      test: ["CMD", "mosquitto_pub", "-h", "localhost", "-t", "lab/health", "-m", "ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
     image: eclipse-mosquitto:2
     volumes:
       - ./infra/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
     networks: [logist]
 
   redpanda:
+    volumes: [redpanda-data:/var/lib/redpanda/data]
+    healthcheck:
+      test: ["CMD", "rpk", "cluster", "health", "--exit-when-healthy"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
     image: redpandadata/redpanda:v24.3.18
     command: ["redpanda","start","--overprovisioned","--smp","1","--memory","512M","--reserve-memory","0M","--node-id","0","--check=false","--kafka-addr","PLAINTEXT://0.0.0.0:9092","--advertise-kafka-addr","PLAINTEXT://redpanda:9092"]
     networks: [logist]
@@ -58,7 +80,7 @@ services:
     environment:
       MONGO_URI: mongodb://mongo:27017
       MQTT_HOST: mosquitto
-    depends_on: {mongo: {condition: service_healthy}, mosquitto: {condition: service_started}}
+    depends_on: {mongo: {condition: service_healthy}, mosquitto: {condition: service_healthy}}
     healthcheck: {test: ["CMD","python","-c","import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"], interval: 10s, timeout: 3s, retries: 15}
     networks: [logist]
 
@@ -73,7 +95,7 @@ services:
     environment:
       FULFILLMENT_DB_URL: postgresql://${POSTGRES_USER:-logist}:${POSTGRES_PASSWORD:-logist_demo}@postgres:5432/fulfillment_db
       KAFKA_BOOTSTRAP: redpanda:9092
-    depends_on: {postgres: {condition: service_healthy}, redpanda: {condition: service_started}}
+    depends_on: {postgres: {condition: service_healthy}, redpanda: {condition: service_healthy}}
     healthcheck: {test: ["CMD","python","-c","import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"], interval: 10s, timeout: 3s, retries: 15}
     networks: [logist]
 
@@ -82,7 +104,7 @@ services:
     environment:
       FULFILLMENT_DB_URL: postgresql://${POSTGRES_USER:-logist}:${POSTGRES_PASSWORD:-logist_demo}@postgres:5432/fulfillment_db
       KAFKA_BOOTSTRAP: redpanda:9092
-    depends_on: {postgres: {condition: service_healthy}, redpanda: {condition: service_started}}
+    depends_on: {postgres: {condition: service_healthy}, redpanda: {condition: service_healthy}}
     networks: [logist]
 
   console:
@@ -91,7 +113,11 @@ services:
       - ./frontend:/usr/share/nginx/html:ro
       - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     ports: ["8080:8080"]
-    depends_on: [inventory-api,logistics-api,operations-api,fulfillment-api]
+    depends_on:
+      inventory-api: {condition: service_healthy}
+      logistics-api: {condition: service_healthy}
+      operations-api: {condition: service_healthy}
+      fulfillment-api: {condition: service_healthy}
     networks: [logist]
 
 networks:
@@ -99,3 +125,4 @@ networks:
 volumes:
   pg_data:
   mongo_data:
+  redpanda-data:

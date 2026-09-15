@@ -30,7 +30,9 @@ def bootstrap():
     try:
       with conn() as c:
         c.execute("CREATE TABLE IF NOT EXISTS orders(order_id text primary key, store_id text, channel text, total numeric, status text, created_at numeric, updated_at numeric)"); c.commit(); return
-    except Exception: time.sleep(1)
+    except psycopg.OperationalError:
+      time.sleep(1)
+  raise RuntimeError("fulfillment-api database bootstrap exhausted retries")
 bootstrap()
 def producer():
   for _ in range(20):
@@ -39,7 +41,12 @@ def producer():
   return None
 class NewOrder(BaseModel): storeId:str='STORE-042'; channel:str='MOBILE'; total:float=18.50
 @app.get('/health')
-def health(): return {'status':'UP','service':'fulfillment-api'}
+def health():
+    try:
+        with conn() as c: c.execute('SELECT 1 FROM orders LIMIT 1')
+    except psycopg.Error:
+        raise HTTPException(503, 'database not ready')
+    return {'status':'UP','service':'fulfillment-api'}
 @app.get('/api/fulfillment/orders')
 def orders():
   with conn() as c: rows=c.execute("SELECT order_id,store_id,channel,total,status,created_at,updated_at FROM orders ORDER BY created_at DESC LIMIT 20").fetchall()

@@ -41,6 +41,10 @@ jobs:
           python-version: '3.12'
       - name: Infrastructure regression tests
         run: python3 -m unittest discover -s tests/infrastructure -v
+      - name: Fulfillment domain and worker regression tests
+        run: |
+          pip install -r services/fulfillment-worker/requirements.txt
+          python -m pytest services/fulfillment-api/tests services/fulfillment-worker/tests -q
       - name: Compile Python services
         run: python3 -m compileall -q services scripts
       - name: Test analytics when its component is included
@@ -71,6 +75,7 @@ jobs:
         run: |
           python3 scripts/wait-ready.py
           bash scripts/smoke.sh
+          bash scripts/business-test.sh
       - name: Start observability control plane
         run: docker compose -f observability/compose.yaml up -d prometheus grafana
       - name: Validate observability health

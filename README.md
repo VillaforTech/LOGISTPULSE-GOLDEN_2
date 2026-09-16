@@ -55,7 +55,15 @@ bash scripts/smoke.sh
 
 Open <http://localhost:8080> for the operations console.
 
-Start the observability stack separately:
+For the fulfillment acceptance path, run the business test after the stack is ready:
+
+```bash
+bash scripts/business-test.sh
+```
+
+It creates one order, observes that exact `orderId` through the individual API endpoint, and fails with a non-zero exit code if `READY` is missing, late, or has no persisted `readyAt`. Fulfillment events are committed to the Postgres outbox and published by the relay to the separate kitchen-command and analytics topics.
+
+## Observability
 
 ```bash
 docker compose -f observability/compose.yaml up -d
@@ -108,3 +116,5 @@ The current implementation status and next action for each workstream live in [G
 ## Project context
 
 LogistPulse also serves as a graded software-engineering case study. The course requirements shape the review process, reproducibility, evidence and release-gate scenarios, but the repository is maintained as a standalone portfolio product. Course-specific records remain under `docs/` so the public project story and the assessment trail are both explicit.
+
+The fulfillment worker retries a failed command before advancing and commits only that command’s partition offset after database success. After five failed attempts it exits without acknowledging; Compose restarts it for replay. Invalid commands also stop progress and require operator correction.

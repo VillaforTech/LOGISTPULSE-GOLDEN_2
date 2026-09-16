@@ -8,7 +8,7 @@ class BootstrapTests(unittest.TestCase):
     def bootstrap(self, service, connection):
         source=ast.parse(Path('services',service,'app.py').read_text())
         function=next(n for n in source.body if isinstance(n,ast.FunctionDef) and n.name=='bootstrap')
-        namespace={'conn':connection,'psycopg':type('P',(),{'OperationalError':TransientError}),'time':MagicMock()}
+        namespace={'os':type('Env',(),{'getenv':staticmethod(lambda *args: '')}),'conn':connection,'psycopg':type('P',(),{'OperationalError':TransientError}),'time':MagicMock()}
         exec(compile(ast.Module(body=[function],type_ignores=[]), '<bootstrap>', 'exec'),namespace)
         return namespace['bootstrap']
     def test_seed_uses_cursor_and_commits(self):

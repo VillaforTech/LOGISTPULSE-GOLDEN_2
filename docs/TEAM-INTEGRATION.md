@@ -16,7 +16,7 @@ Los repos comparten puertos publicados: usar Codespaces distintos o detener una 
 ## Contrato de infraestructura para el equipo
 
 - Broker: `redpanda:9092`, topic `logistpulse.fulfillment.events.v1`, clave `aggregateId`, una partición y retención de 24 h para el entorno de desarrollo. El bootstrap es idempotente y no recrea topics existentes.
-- Analítica #2: se acepta SQLite propio con WAL, volumen Linux y **una sola instancia** para este alcance. No necesita migrar a PostgreSQL para integrar. No lee tablas del productor. El gemelo usa otro almacenamiento; adaptar interfaces, no copiar su stack completo.
+- Analítica #2: se acepta SQLite propio con WAL, volumen Linux y **una sola instancia** para este alcance. No necesita migrar a PostgreSQL para integrar. No lee tablas del productor. El almacenamiento debe respetar el contrato de eventos y conservar checkpoints durante reinicios.
 - Después de incluir el PR de #2, usar `docker compose -f compose.yaml -f compose.analytics.yaml up --build -d --wait`. `ANALYTICS_COVERAGE_FROM` debe ser el inicio UTC real de una población conocida. No cambiarlo sobre una base existente ni inventar cobertura para datos previos.
 - Analítica interna: `http://business-analytics:8000`, `/health`, `/ready`, `/snapshot`, `/updates?after=N`, `/stream?after=N`, `/metrics`. El volumen es exclusivo y persiste durante reinicios.
 - #1 conserva su outbox y publica después del commit con eventId estable y aggregateVersion consecutiva. UTC debe conservar microsegundos. Deadline exactamente alcanzado es puntual; una cohorte expira al llegar a 900 s (ventana semiabierta). Coordinar estas decisiones con la documentación del productor y los tests del consumidor.
@@ -38,4 +38,4 @@ No usar el agregado anterior que permitía resiliencia SKIPPED. Implementar los 
 4. Ejecutar la demostración sano → negocio rojo con servicios UP → gate bloqueado → corregido verde; conservar SHAs y runs.
 5. Obtener revisión elegible y reproducir en Codespace limpio. La regla autorizada el 15 de septiembre exige una aprobación de otro colaborador con escritura; CODEOWNERS solo sugiere revisor. Se conservan todos los checks, la invalidación de aprobaciones y enforcement al administrador. Un PR propio no se autoaprueba.
 
-Referencia: [gemelo](https://github.com/VillaforTech/logistpulse-reference). Código de referencia asistido por Codex; cada integrante conserva autoría y evidencia de su implementación.
+La implementación se verifica con los contratos, pruebas y artifacts de este repositorio. Cada integrante conserva la autoría y evidencia de sus contribuciones en los commits y PRs.

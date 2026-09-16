@@ -1,0 +1,20 @@
+# Apply after the analytics PR is present. Existing data/coverage must be preserved.
+services:
+  business-analytics:
+    build: ./services/business-analytics
+    environment:
+      KAFKA_BOOTSTRAP: redpanda:9092
+      ANALYTICS_DB: /data/analytics.sqlite
+      ANALYTICS_TICK_SECONDS: "0.2"
+      ANALYTICS_COVERAGE_FROM: ${ANALYTICS_COVERAGE_FROM:?Set the actual UTC start of this known laboratory population}
+    volumes: [business-analytics-data:/data]
+    depends_on:
+      business-topics: {condition: service_completed_successfully}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/ready', timeout=2)"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    networks: [logist]
+volumes:
+  business-analytics-data:

@@ -4,3 +4,7 @@ __pycache__/
 .pytest_cache/
 .DS_Store
 *.log
+
+artifacts/
+__pycache__/
+*.pyc

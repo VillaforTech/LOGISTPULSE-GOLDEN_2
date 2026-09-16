@@ -47,7 +47,7 @@ def conn():
 def bootstrap():
     if os.getenv("SKIP_DB_BOOTSTRAP", "").strip().lower() in {"1", "true", "yes", "on"}:
         return
-    for _ in range(5):
+    for _ in range(50):
         try:
             with conn() as c:
                 c.execute(
@@ -60,9 +60,9 @@ def bootstrap():
                 )
                 c.commit()
                 return
-        except Exception:
+        except psycopg.OperationalError:
             time.sleep(1)
-    raise RuntimeError("fulfillment-api database bootstrap failed after 5 attempts")
+    raise RuntimeError("fulfillment-api database bootstrap failed after 50 attempts")
 
 
 @app.on_event("startup")
@@ -86,6 +86,11 @@ class NewOrder(BaseModel):
 
 @app.get('/health')
 def health():
+    try:
+        with conn() as c:
+            c.execute('SELECT 1 FROM orders LIMIT 1')
+    except psycopg.Error:
+        raise HTTPException(503, 'database not ready')
     return {'status': 'UP', 'service': 'fulfillment-api'}
 
 

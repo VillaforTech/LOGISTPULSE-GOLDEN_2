@@ -2,7 +2,7 @@
 set -euo pipefail
 
 base=${1:-http://localhost:8080}
-max_wait=${BUSINESS_TEST_MAX_WAIT_SECONDS:-12}
+max_wait=${BUSINESS_TEST_MAX_WAIT_SECONDS:-20}
 order_json=$(curl -fsS -X POST \
   -H 'Content-Type: application/json' \
   -d '{"storeId":"STORE-042","channel":"BUSINESS-TEST","total":25.5}' \

@@ -70,5 +70,8 @@ def publish_pending():
 bootstrap()
 producer_for_batch = producer()
 while True:
-    publish_pending()
+    try:
+        publish_pending()
+    except Exception as error:
+        print("relay loop failed", error)
     time.sleep(POLL_SECONDS)

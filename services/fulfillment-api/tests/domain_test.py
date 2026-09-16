@@ -126,8 +126,18 @@ def test_order_ready_event_refuses_to_lie():
     """An order stuck in PREPARING must never produce an OrderReady —
     this is the core 'falso verde' guard."""
     o = make_order(status="PREPARING")
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         order_ready_event(o, occurred_at_iso="x", created_at_iso="x", ready_at_iso="x")
+
+
+def test_lk1_expires_order_at_900_second_cohort_boundary():
+    expired = make_order(status="PREPARING", created_at=T0 - 900)
+    assert compute_lk1([expired], now=T0) == SIN_MUESTRA
+
+
+def test_lk1_includes_order_just_inside_900_second_cohort_boundary():
+    current = make_order(status="PREPARING", created_at=T0 - 899.999)
+    assert compute_lk1([current], now=T0) == 100.0
 
 
 def test_order_ready_event_shape():

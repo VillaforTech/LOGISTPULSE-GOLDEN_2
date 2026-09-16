@@ -30,9 +30,10 @@ class Order:
 
     def missed_deadline(self, now: float) -> bool:
         if self.status == "READY":
-            assert self.ready_at is not None, (
-                f"order {self.order_id} is READY but has no ready_at — data integrity bug upstream"
-            )
+            if self.ready_at is None:
+                raise ValueError(
+                    f"order {self.order_id} is READY but has no ready_at — data integrity bug upstream"
+                )
             return self.ready_at > self.deadline
         return now > self.deadline
 
@@ -41,7 +42,7 @@ def compute_lk1(orders: Iterable[Order], now: float) -> Union[float, str]:
     cohort_start = now - COHORT_WINDOW_SECONDS
     eligible = [
         o for o in orders
-        if cohort_start <= o.created_at <= now and o.deadline <= now
+        if cohort_start < o.created_at <= now and o.deadline <= now
     ]
     if not eligible:
         return SIN_MUESTRA

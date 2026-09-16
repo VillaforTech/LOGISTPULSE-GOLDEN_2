@@ -46,9 +46,8 @@ def preparation_started_event(order: Order, occurred_at_iso: str,
 
 def order_ready_event(order: Order, occurred_at_iso: str, created_at_iso: str,
                        ready_at_iso: str, event_id: Optional[str] = None) -> dict:
-    assert order.status == "READY" and order.ready_at is not None, (
-        "cannot build OrderReady for an order that isn't actually READY"
-    )
+    if order.status != "READY" or order.ready_at is None:
+        raise ValueError("cannot build OrderReady for an order that isn't actually READY")
     return _envelope("OrderReady", order, 3, occurred_at_iso, {
         "orderId": order.order_id,
         "createdAt": created_at_iso,

@@ -19,7 +19,7 @@ def conn():
 
 
 def iso_utc(ts: float) -> str:
-    return datetime.fromtimestamp(ts, tz=timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+    return datetime.fromtimestamp(ts, tz=timezone.utc).isoformat(timespec='microseconds').replace('+00:00', 'Z')
 
 
 def bootstrap():
@@ -33,6 +33,7 @@ def bootstrap():
                 return
         except Exception:
             time.sleep(1)
+    raise RuntimeError('fulfillment-worker database bootstrap failed after 30 attempts')
 
 
 bootstrap()
@@ -45,6 +46,7 @@ while True:
             bootstrap_servers=KAFKA,
             group_id='kitchen-worker',
             auto_offset_reset='earliest',
+            enable_auto_commit=False,
             value_deserializer=lambda b: json.loads(b.decode()),
         )
         break
@@ -55,6 +57,7 @@ while True:
 for msg in consumer:
     oid = msg.value.get('orderId')
     if not oid:
+        consumer.commit()
         continue
     try:
         with conn() as c:
@@ -63,6 +66,7 @@ for msg in consumer:
                 (oid,),
             ).fetchone()
         if row is None:
+            consumer.commit()
             continue
 
         order = Order(
@@ -88,7 +92,8 @@ for msg in consumer:
                     )
                 c.commit()
 
-        time.sleep(4)
+        if order.status != 'READY':
+            time.sleep(4)
 
         with conn() as c:
             row = c.execute(
@@ -96,6 +101,7 @@ for msg in consumer:
                 (oid,),
             ).fetchone()
         if row is None:
+            consumer.commit()
             continue
 
         persisted = Order(
@@ -120,5 +126,6 @@ for msg in consumer:
                         (ready_event["eventId"], "logistpulse.fulfillment.events.v1", oid, 3, json.dumps(ready_event), ready_now, ready_now),
                     )
                 c.commit()
+            consumer.commit()
     except Exception as e:
         print('worker error', e)

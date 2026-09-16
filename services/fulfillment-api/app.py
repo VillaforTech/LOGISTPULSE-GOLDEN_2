@@ -62,6 +62,7 @@ def bootstrap():
                 return
         except Exception:
             time.sleep(1)
+    raise RuntimeError("fulfillment-api database bootstrap failed after 5 attempts")
 
 
 @app.on_event("startup")
@@ -74,7 +75,7 @@ if __name__ == "__main__":
 
 
 def iso_utc(ts: float) -> str:
-    return datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return datetime.fromtimestamp(ts, tz=timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z")
 
 
 class NewOrder(BaseModel):

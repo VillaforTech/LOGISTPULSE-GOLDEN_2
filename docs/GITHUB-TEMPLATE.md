@@ -1,8 +1,8 @@
 # GitHub distribution model
 
-## Golden repository
+## Reusable project foundation
 
-The instructor publishes `LOGISTPULSE-GOLDEN` as the validated Template Repository. Students do not upload ZIP files.
+`LOGISTPULSE-GOLDEN` began as a validated template and now acts as the reusable foundation for the product family. Teams create repositories from Git history rather than exchanging ZIP archives, preserving ownership and review evidence.
 
 Recommended product repositories created with **Use this template**:
 
@@ -11,7 +11,7 @@ Recommended product repositories created with **Use this template**:
 - `LOGISTPULSE-OPERATIONS`
 - `LOGISTPULSE-FULFILLMENT`
 
-Each product cell pairs a Design of Systems team (frontend/backend) with a Software Development team acting as DevOps/Platform Engineering.
+Each product cell pairs product/domain engineering with platform/reliability engineering.
 
 ## Branch model
 

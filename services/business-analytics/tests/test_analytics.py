@@ -2,11 +2,10 @@ import json
 from unittest.mock import patch
 
 import pytest
-from fastapi.testclient import TestClient
-
 from analytics.app import create_app, fresh_view, metrics
 from analytics.domain import iso, timestamp
 from analytics.store import Store
+from fastapi.testclient import TestClient
 
 T0 = timestamp("2026-01-01T00:00:00Z")
 
@@ -109,6 +108,30 @@ def test_out_of_order_is_incomplete_then_recovers(store):
     assert values(final) == [0, "0", "0"]
 
 
+def test_integrated_producer_microsecond_rounding_keeps_acceptance_time(store):
+    accepted = event(1)
+    preparing = event(2)
+    ready = event(3)
+    preparing["payload"]["createdAt"] = iso(T0 + 0.000003)
+    ready["payload"]["createdAt"] = iso(T0 + 0.000003)
+    for item in (accepted, preparing, ready):
+        store.ingest(item)
+    result = publish(store)
+    assert result["quality"] == "ACTUAL"
+    assert result["coverage"]["schemaErrors"] == 0
+    assert values(result) == [0, "0", "0"]
+
+
+def test_created_at_change_outside_serialization_tolerance_is_visible(store):
+    store.ingest(event(1))
+    changed = event(2)
+    changed["payload"]["createdAt"] = iso(T0 + 0.001)
+    store.ingest(changed)
+    result = publish(store)
+    assert result["quality"] == "INCOMPLETO"
+    assert result["coverage"]["schemaErrors"] == 1
+
+
 def test_duplicates_and_old_versions_do_not_reopen_order(store):
     for version in (1, 2, 3, 1, 3, 2):
         store.ingest(event(version))
@@ -167,11 +190,11 @@ def test_malformed_json_and_kafka_key(store):
 
 
 def test_atomic_rollback_before_checkpoint(store):
-    with patch.object(
-        store, "_drain", side_effect=RuntimeError("simulated disk error")
+    with (
+        patch.object(store, "_drain", side_effect=RuntimeError("simulated disk error")),
+        pytest.raises(RuntimeError),
     ):
-        with pytest.raises(RuntimeError):
-            store.ingest(event(), partition=0, offset=7)
+        store.ingest(event(), partition=0, offset=7)
     assert store.checkpoint(0) is None
     assert publish(store)["kpis"]["counts"]["orders"] == 0
     store.ingest(event(), offset=7)
@@ -274,17 +297,19 @@ def test_liveness_readiness_bootstrap_and_paged_updates(store):
     store.ingest(event())
     first = publish(store)
     second = publish(store, 21)
-    with patch("analytics.app.time.time", return_value=T0 + 21):
-        with TestClient(create_app(store, run_consumer=False)) as client:
-            assert client.get("/health").status_code == 200
-            assert client.get("/ready").status_code == 200
-            assert client.get("/snapshot").json() == second
-            assert client.get("/updates?after=0&limit=1").json()["snapshots"] == [first]
-            assert client.get(f"/updates?after={first['revision']}").json()[
-                "snapshots"
-            ] == [second]
-            assert client.get("/updates?after=-1").status_code == 422
-            assert client.get("/metrics").status_code == 200
+    with (
+        patch("analytics.app.time.time", return_value=T0 + 21),
+        TestClient(create_app(store, run_consumer=False)) as client,
+    ):
+        assert client.get("/health").status_code == 200
+        assert client.get("/ready").status_code == 200
+        assert client.get("/snapshot").json() == second
+        assert client.get("/updates?after=0&limit=1").json()["snapshots"] == [first]
+        assert client.get(f"/updates?after={first['revision']}").json()[
+            "snapshots"
+        ] == [second]
+        assert client.get("/updates?after=-1").status_code == 422
+        assert client.get("/metrics").status_code == 200
     stale = fresh_view(store, T0 + 25)
     assert not stale["valid"]
     assert stale["quality"] == "DESACTUALIZADO"
@@ -293,10 +318,12 @@ def test_liveness_readiness_bootstrap_and_paged_updates(store):
 
 def test_health_up_does_not_imply_ready(store):
     store.publish(T0)
-    with patch("analytics.app.time.time", return_value=T0):
-        with TestClient(create_app(store, run_consumer=False)) as client:
-            assert client.get("/health").json()["status"] == "UP"
-            assert client.get("/ready").status_code == 503
+    with (
+        patch("analytics.app.time.time", return_value=T0),
+        TestClient(create_app(store, run_consumer=False)) as client,
+    ):
+        assert client.get("/health").json()["status"] == "UP"
+        assert client.get("/ready").status_code == 503
 
 
 def test_real_process_exit_after_commit_before_acknowledgement(tmp_path):
@@ -314,6 +341,7 @@ def test_real_process_exit_after_commit_before_acknowledgement(tmp_path):
     result = subprocess.run(
         [sys.executable, "-c", program, path, iso(T0), payload],
         cwd=Path(__file__).resolve().parents[1],
+        check=False,
     )
     assert result.returncode == 23
     recovered = Store(path, iso(T0))

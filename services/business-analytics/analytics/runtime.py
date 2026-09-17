@@ -18,7 +18,12 @@ class Runtime:
         self.store = store
         self.stop = threading.Event()
         self.state_lock = threading.Lock()
-        self.health = dict(connected=False, caught_up=False, last_poll=None, lag=None)
+        self.health = {
+            "connected": False,
+            "caught_up": False,
+            "last_poll": None,
+            "lag": None,
+        }
         self.tick = float(os.getenv("ANALYTICS_TICK_SECONDS", "0.2"))
         if not 0.1 <= self.tick <= 0.25:
             raise ValueError("ANALYTICS_TICK_SECONDS must be between 0.1 and 0.25")
@@ -47,8 +52,7 @@ class Runtime:
             except Exception:
                 LOG.exception("projection tick failed")
             target += self.tick
-            if target < time.monotonic():
-                target = time.monotonic()
+            target = max(target, time.monotonic())
             self.stop.wait(max(0, target - time.monotonic()))
 
     def consume(self):

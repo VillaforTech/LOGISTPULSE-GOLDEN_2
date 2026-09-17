@@ -9,8 +9,8 @@ import time
 import urllib.error
 import urllib.request
 from datetime import datetime, timezone
-from pathlib import Path
 from decimal import Decimal
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -117,10 +117,10 @@ def run(docker):
     assert 0 < delay <= 1, delay
     record("deadline without new events within one second", {"delaySeconds": delay})
     sample = until(
-        lambda s: datetime.fromisoformat(
-            s["generatedAt"].replace("Z", "+00:00")
-        ).timestamp()
-        >= created + 20
+        lambda s: (
+            datetime.fromisoformat(s["generatedAt"].replace("Z", "+00:00")).timestamp()
+            >= created + 20
+        )
     )
     at = datetime.fromisoformat(
         sample["generatedAt"].replace("Z", "+00:00")

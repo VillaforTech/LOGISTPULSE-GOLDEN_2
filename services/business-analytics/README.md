@@ -14,10 +14,11 @@ No modifica Fulfillment, su worker, inventario, frontend, el CI ni los servicios
 - #4 (@VillaforTech): topic, volumen, red y configuración de despliegue; integración en Release gate.
 - #5 (@Dmt-155lbs): oráculo independiente y pruebas de extremo a extremo.
 
-Referencia de entrada revisada: `origin/architecture/events_and_kpi_01`, commit
-`6c05d99`, `docs/events-deber-01.md`. No está integrado en main.
-Los tests aquí usan fixtures explícitas; un resultado verde del componente NO demuestra
-el recorrido Fulfillment → Grafana ni sustituye la revisión de Roberto.
+Contrato de entrada integrado en `origin/main`, commit `2096825`,
+`docs/events-deber-01.md`. La infraestructura y el overlay de #4 están integrados desde
+`78f32d4`. Los tests aislados usan fixtures explícitas; la prueba
+`tests/system_integration.py` acredita Fulfillment → analítica, pero no el recorrido hasta
+Grafana ni sustituye la revisión de Roberto.
 
 ## Ejecución y pruebas
 
@@ -54,6 +55,17 @@ bash scripts/smoke.sh
 docker compose -f observability/compose.yaml up -d prometheus grafana
 ```
 
+Prueba integrada con el productor real, después de arrancar la raíz y el overlay:
+
+```bash
+python services/business-analytics/tests/system_integration.py \
+  --output artifacts/analytics/producer-integration.json
+```
+
+Esta prueba crea un pedido por Fulfillment API, observa los eventos reales de outbox/relay
+en la proyección, compara `createdAt`, `readyAt`, total, estado y versiones con el pedido
+exacto de la API, reinicia Business Analytics y exige recuperación sin duplicación.
+
 No modificar el smoke ni ocultar un fallo base para obtener verde.
 
 ## Decisión de almacenamiento (propuesta para revisión de #4)
@@ -79,6 +91,9 @@ Para respaldo en ejecución usar la API backup de SQLite; no copiar solo el arch
 ## Semántica temporal
 
 - Se usan tiempos UTC con zona explícita y un reloj inyectable en el cálculo.
+- `OrderAccepted.createdAt` queda como instante canónico. Las transiciones toleran hasta
+  10 microsegundos de diferencia por la conversión PostgreSQL numeric → float → ISO del
+  productor integrado; una diferencia mayor se registra como error de esquema.
 - Deadline: createdAt + 15 s; READY exactamente en el deadline es puntual.
 - Un pedido abierto es incumplido cuando ahora > deadline.
 - L-K1: pedidos creados en la cohorte vigente y deadline vencido; cuenta READY tardío.
@@ -175,7 +190,7 @@ No importar el calculador del productor ni sustituir el oráculo independiente d
 
 Usar feat/2-business-analytics, PR contra main y plantilla del repositorio.
 Registrar comandos y resultados observados, revisión de Roberto y checks requeridos.
-Pendientes compartidos: contrato integrado #1; volumen/configuración aprobados #4;
-adaptador/panel #3; medición extremo a extremo de >=100 operaciones con #3/#5;
-base/Release gate verde del #4. No afirmar p95 del navegador a partir de nuestros tests.
+Pendientes compartidos fuera de #2: adaptador/panel #3 y medición extremo a extremo de
+>=100 operaciones con #3/#5. Para cerrar #2 todavía se exige CI verde del nuevo SHA y
+revisión de Roberto. No afirmar p95 del navegador a partir de nuestros tests.
 No cerrar #2 por haber completado solo las pruebas aisladas.

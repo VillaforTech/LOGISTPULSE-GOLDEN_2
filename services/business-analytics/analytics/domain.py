@@ -3,10 +3,15 @@
 from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation
 
+# PostgreSQL numeric -> Python float -> ISO conversion in the integrated producer can
+# move the last microseconds while describing the same persisted creation instant.
+# Keep the acceptance event canonical and tolerate only that serialization boundary.
+CREATED_AT_SERIALIZATION_TOLERANCE_SECONDS = 0.00001
+
 
 def timestamp(value):
     if not isinstance(value, str):
-        raise ValueError("timestamp must be an ISO-8601 string with timezone")
+        raise TypeError("timestamp must be an ISO-8601 string with timezone")
     result = datetime.fromisoformat(value.replace("Z", "+00:00"))
     if result.tzinfo is None:
         raise ValueError("timezone is required")
@@ -21,7 +26,7 @@ def iso(value):
 
 def amount(value):
     if isinstance(value, bool):
-        raise ValueError("boolean amount")
+        raise TypeError("boolean amount")
     try:
         result = Decimal(str(value))
     except InvalidOperation as exc:
@@ -33,7 +38,7 @@ def amount(value):
 
 def validate(event):
     if not isinstance(event, dict):
-        raise ValueError("event must be an object")
+        raise TypeError("event must be an object")
     for key in ("eventId", "aggregateId"):
         if not isinstance(event.get(key), str) or not event[key].strip():
             raise ValueError(f"{key} is required")
@@ -55,7 +60,7 @@ def validate(event):
         raise ValueError("aggregateVersion does not match v1 transition")
     payload = event.get("payload")
     if not isinstance(payload, dict):
-        raise ValueError("payload must be an object")
+        raise TypeError("payload must be an object")
     if (
         payload.get("orderId") != event["aggregateId"]
         or payload.get("status") != status
@@ -93,7 +98,10 @@ def project(previous, event):
             "expiresAt": created + 900,
             "occurredAt": timestamp(event["occurredAt"]),
         }
-    if created != previous["createdAt"]:
+    if (
+        abs(created - previous["createdAt"])
+        > CREATED_AT_SERIALIZATION_TOLERANCE_SECONDS
+    ):
         raise ValueError("createdAt changed")
     if "total" in payload and amount(payload["total"]) != amount(previous["total"]):
         raise ValueError("total changed")

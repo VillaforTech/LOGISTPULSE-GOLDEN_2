@@ -7,10 +7,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Query, Response
 from fastapi.responses import JSONResponse, StreamingResponse
 from prometheus_client import (
+    CONTENT_TYPE_LATEST,
     CollectorRegistry,
     Gauge,
     generate_latest,
-    CONTENT_TYPE_LATEST,
 )
 
 from .domain import timestamp

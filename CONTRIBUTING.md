@@ -71,9 +71,9 @@ bash scripts/smoke.sh
 
 The integration contract in [TEAM-INTEGRATION](docs/TEAM-INTEGRATION.md) defines the topic, analytics interface and acceptance hook. Once `scripts/acceptance/` exists, skipped resilience checks and API-only latency evidence must fail the pipeline. The deliberate broken business revision belongs in a PR demonstration and must never be merged into `main`.
 
-## Using the reference implementation
+## Working from project contracts
 
-The separate [LogistPulse Reference](https://github.com/VillaforTech/logistpulse-reference) is an executable example, not a substitute for a teammate's contribution. Review the design, adapt only the needed parts, preserve attribution and demonstrate the result in this repository with the team's own tests and PR history.
+Start with the [architecture and data ownership](docs/architecture/DATA-OWNERSHIP.md) and [integration contract](docs/TEAM-INTEGRATION.md). Keep implementation, tests and documentation aligned in the same pull request. Preserve attribution when adapting existing code, and support completion claims with tests and evidence produced in this repository.
 
 ## Security and project context
 

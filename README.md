@@ -4,7 +4,7 @@ LogistPulse is an event-driven operations platform for a simulated nationwide re
 
 The project is designed as a team portfolio system: it demonstrates service boundaries, polyglot persistence, MQTT and Kafka-compatible streaming, live Grafana views, recovery from partial failures and release controls based on business behavior.
 
-> **Project status:** the platform foundation and integration branch are green. The team is completing the fulfillment event pipeline, recoverable analytics, Grafana Live panels and end-to-end acceptance harness. A separate reference implementation shows the complete target behavior without claiming those contributions for the team.
+> **Project status:** follow the [implementation work](https://github.com/VillaforTech/logistpulse/issues), [pull requests](https://github.com/VillaforTech/logistpulse/pulls) and [CI runs](https://github.com/VillaforTech/logistpulse/actions) for current progress. The [integration guide](docs/TEAM-INTEGRATION.md) defines the contracts and acceptance evidence required for each contribution.
 
 ## Product capabilities
 

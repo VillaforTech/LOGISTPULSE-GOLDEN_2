@@ -1,0 +1,2 @@
+{"eventId":"fixture-1","eventType":"OrderAccepted","schemaVersion":1,"aggregateId":"fixture-order","aggregateVersion":1,"occurredAt":"2026-01-01T00:00:00Z","payload":{"orderId":"fixture-order","total":"25.5","createdAt":"2026-01-01T00:00:00Z","status":"WAITING"}}
+{"eventId":"fixture-2","eventType":"PreparationStarted","schemaVersion":1,"aggregateId":"fixture-order","aggregateVersion":2,"occurredAt":"2026-01-01T00:00:01Z","payload":{"orderId":"fixture-order","createdAt":"2026-01-01T00:00:00Z","status":"PREPARING"}}

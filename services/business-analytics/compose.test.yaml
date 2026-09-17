@@ -1,0 +1,33 @@
+# Isolated component laboratory; no changes to the shared #4 Compose or CI.
+name: logistpulse-analytics-test
+services:
+  broker:
+    image: redpandadata/redpanda:v24.3.18
+    command: ["redpanda", "start", "--overprovisioned", "--smp", "1", "--memory", "512M", "--reserve-memory", "0M", "--node-id", "0", "--check=false", "--kafka-addr", "PLAINTEXT://0.0.0.0:9092", "--advertise-kafka-addr", "PLAINTEXT://broker:9092"]
+    healthcheck:
+      test: ["CMD", "rpk", "cluster", "info", "-X", "brokers=localhost:9092"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+  topic:
+    image: redpandadata/redpanda:v24.3.18
+    depends_on:
+      broker: {condition: service_healthy}
+    entrypoint: ["rpk", "topic", "create", "logistpulse.fulfillment.events.v1", "-X", "brokers=broker:9092"]
+  analytics:
+    build: .
+    environment:
+      KAFKA_BOOTSTRAP: broker:9092
+      # Declares this isolated fixture population only, not coverage of the shared application.
+      ANALYTICS_COVERAGE_FROM: "2026-01-01T00:00:00Z"
+    volumes: [analytics-test-data:/data]
+    ports: ["127.0.0.1:18080:8000"]
+    depends_on:
+      topic: {condition: service_completed_successfully}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+volumes:
+  analytics-test-data:

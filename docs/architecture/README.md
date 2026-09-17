@@ -1,6 +1,6 @@
-# LOGISTdragon architecture
+# LogistPulse architecture
 
-LOGISTdragon is an independent universe focused on physical operations, logistics, restaurant/retail execution and cyber-physical systems.
+LogistPulse is an independent product system focused on physical operations, logistics, restaurant/retail execution and cyber-physical signals.
 
 ## Bounded contexts
 
@@ -9,4 +9,4 @@ LOGISTdragon is an independent universe focused on physical operations, logistic
 3. Smart Operations — store equipment telemetry and operational alerts.
 4. Fulfillment — order lifecycle and kitchen queue.
 
-The platform intentionally mixes synchronous APIs, MQTT telemetry and Kafka-compatible event streaming so students can compare integration styles.
+The platform combines synchronous APIs, MQTT telemetry and Kafka-compatible event streaming where each integration style fits the operational problem.

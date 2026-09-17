@@ -1,9 +1,11 @@
-# Academic engineering organization
+# Product engineering organization
 
-## Design of Systems
+## Product and domain engineering
+
 Owns product design and implementation: frontend, backend, domain model, APIs, acceptance criteria, data model, C4 and architecture decisions.
 
-## Software Development / DevOps
-Owns industrialization and operational readiness: Codespaces, Docker/Compose, CI/CD, integration gates, deployment readiness, Prometheus/Grafana, incident evidence and later DevSecOps controls.
+## Platform and reliability engineering
 
-DevOps does not silently fix product defects. It blocks a release with reproducible evidence and assigns the finding back to the product team.
+Owns operational readiness: Codespaces, Docker Compose, CI/CD, integration gates, deployment readiness, Prometheus, Grafana, incident evidence and DevSecOps controls.
+
+The platform role does not silently absorb product defects. It blocks a release with reproducible evidence and returns the finding to the owning workstream.

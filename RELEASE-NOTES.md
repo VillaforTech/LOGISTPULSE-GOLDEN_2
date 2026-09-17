@@ -1,6 +1,6 @@
-# LOGISTPULSE-GOLDEN V1.0
+# LogistPulse V1.0
 
-First golden release of the independent LOGISTdragon universe.
+First portfolio release of the independent LogistPulse operations platform.
 
 - Interactive operations frontend.
 - Four domain microservices: Inventory, Distribution, Smart Operations and Fulfillment.
@@ -8,4 +8,4 @@ First golden release of the independent LOGISTdragon universe.
 - CI with architecture contract, unit tests, image builds and smoke tests.
 - Prometheus, Grafana and cAdvisor observability stack.
 - Codespaces-ready devcontainer with Docker-in-Docker and Yarn source workaround.
-- ADR and data-ownership templates for student teams.
+- ADR and data-ownership templates for collaborative engineering work.

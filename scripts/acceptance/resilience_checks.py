@@ -21,7 +21,7 @@ reporta SKIPPED con exit code 3, dejando explicito que un SKIPPED NO es
 un resultado verde: run-acceptance.sh nunca debe contar un SKIPPED como
 PASS.
 
-Cuando el issue #1 (contrato de eventos + outbox) y el #4 (integracion)
+Cuando el issue #2 (analitica persistente) y el #3 (Grafana Live)
 esten disponibles, cada funcion `check_*` debe reemplazar su deteccion
 de ausencia por la implementacion real indicada en su TODO.
 
@@ -36,7 +36,7 @@ Casos cubiertos (esqueleto ejecutable, hoy todos SKIPPED):
 
 Codigos de salida del script completo:
   0 = todos los casos ejecutables PASARON (hoy, imposible: todos SKIPPED)
-  3 = al menos un caso SKIPPED por dependencia ausente (issue #1/#4) y
+  3 = al menos un caso SKIPPED por dependencia ausente (issues #2 y #3) y
       ninguno FALLO -- este es el resultado esperado HOY.
   1 = al menos un caso FALLO de verdad (una vez implementado).
 """
@@ -114,9 +114,9 @@ def check_evento_duplicado(base_url: str, contrato_ok: bool) -> str:
     if not contrato_ok:
         return _reportar_skip(
             nombre,
-            f"requiere #1 (contrato de eventos {EVENTS_TOPIC} con eventId) / #4 (integracion)",
+            f"requiere #2 (services/business-analytics, sin fusionar: rama feat/2-business-analytics)",
         )
-    # TODO(issue #1/#4): implementar el caso real:
+    # TODO(issues #2 y #3): implementar el caso real:
     #   1. Producir un evento con eventId=X hacia el topic de eventos.
     #   2. Reenviar EXACTAMENTE el mismo evento (mismo eventId=X).
     #   3. Verificar via el contrato/endpoint que el efecto se aplico
@@ -137,9 +137,9 @@ def check_eventos_desordenados(base_url: str, contrato_ok: bool) -> str:
     if not contrato_ok:
         return _reportar_skip(
             nombre,
-            f"requiere #1 (secuencia/orden de eventos en {EVENTS_TOPIC}) / #4 (integracion)",
+            f"requiere #2 (proyeccion analitica que observe orden y eventos tardios)",
         )
-    # TODO(issue #1/#4): implementar:
+    # TODO(issues #2 y #3): implementar:
     #   1. Enviar evento de transicion N+1 antes que N.
     #   2. Enviar despues el evento N (tardio).
     #   3. Verificar que el estado final es consistente con el orden
@@ -161,9 +161,9 @@ def check_broker_caido_outbox_pendiente(base_url: str, contrato_ok: bool) -> str
     if not contrato_ok:
         return _reportar_skip(
             nombre,
-            "requiere #1 (patron outbox, tabla/mecanismo de eventos pendientes) / #4 (integracion)",
+            "requiere #2 (consumidor analitico para observar el outbox pendiente)",
         )
-    # TODO(issue #1/#4): implementar:
+    # TODO(issues #2 y #3): implementar:
     #   1. Detener el broker (docker compose stop redpanda) tras un
     #      commit de negocio.
     #   2. Verificar que el evento queda en la tabla outbox (pendiente).
@@ -184,9 +184,9 @@ def check_reinicio_consumidor_checkpoint(base_url: str, contrato_ok: bool) -> st
     if not contrato_ok:
         return _reportar_skip(
             nombre,
-            "requiere #1 (checkpoints/offsets documentados) / #4 (integracion, control del ciclo de vida del worker)",
+            "requiere #2 (checkpoints del consumidor analitico)",
         )
-    # TODO(issue #1/#4): implementar:
+    # TODO(issues #2 y #3): implementar:
     #   1. Reiniciar fulfillment-worker antes de que confirme el offset
     #      de un mensaje -> verificar que el pedido SI llega a READY
     #      (no se pierde).
@@ -210,7 +210,7 @@ def check_desconexion_grafana_live(base_url: str, contrato_ok: bool) -> str:
     if not contrato_ok:
         return _reportar_skip(
             nombre,
-            f"requiere #1 (contrato de eventos {EVENTS_TOPIC}) y #3 (Grafana Live, paneles, reconexion)",
+            f"requiere #3 (Grafana Live, paneles, reconexion)",
         )
     # TODO(issue #1/#3): implementar:
     #   1. Cortar la conexion de Grafana Live (o del datasource
@@ -261,7 +261,7 @@ def main() -> int:
         return 1
     if hubo_skip:
         print(
-            "RESULTADO: SKIPPED (dependen de #1/#4; SKIPPED nunca cuenta "
+            "RESULTADO: SKIPPED (dependen de #2 (analitica) y #3 (Grafana Live), aun sin fusionar; SKIPPED nunca cuenta "
             "como resultado verde/PASS)"
         )
         return 3
